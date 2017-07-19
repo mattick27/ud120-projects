@@ -1,12 +1,12 @@
 #!/usr/bin/python
 
 import pickle
-import cPickle
 import numpy
 
 from sklearn import cross_validation
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectPercentile, f_classif
+
 
 
 
@@ -26,21 +26,33 @@ def preprocess(words_file = "../tools/word_data.pkl", authors_file="../tools/ema
             -- training/testing labels
 
     """
-
+    original = "../tools/word_data.pkl"
+    destination = "../tools/word_data_unix.pkl"
+    
+    content = ''
+    outsize = 0
+    with open(original, 'rb') as infile:
+        content = infile.read()
+        with open(destination, 'wb') as output:
+            for line in content.splitlines():
+                outsize += len(line) + 1
+                output.write(line + str.encode('\n'))
+    
+    print("Done. Saved %s bytes." % (len(content)-outsize))
     ### the words (features) and authors (labels), already largely preprocessed
     ### this preprocessing will be repeated in the text learning mini-project
-    authors_file_handler = open(authors_file, "r")
+    authors_file_handler = open(authors_file, "rb")
     authors = pickle.load(authors_file_handler)
     authors_file_handler.close()
-
-    words_file_handler = open(words_file, "r")
-    word_data = cPickle.load(words_file_handler)
+    
+    words_file_handler = open(words_file, "rb")
+    word_data = pickle.load(words_file_handler)
     words_file_handler.close()
-
     ### test_size is the percentage of events assigned to the test set
     ### (remainder go into training)
     features_train, features_test, labels_train, labels_test = cross_validation.train_test_split(word_data, authors, test_size=0.1, random_state=42)
 
+    
 
 
     ### text vectorization--go from strings to lists of numbers
@@ -59,7 +71,7 @@ def preprocess(words_file = "../tools/word_data.pkl", authors_file="../tools/ema
     features_test_transformed  = selector.transform(features_test_transformed).toarray()
 
     ### info on the data
-    print "no. of Chris training emails:", sum(labels_train)
-    print "no. of Sara training emails:", len(labels_train)-sum(labels_train)
+    print ("no. of Chris training emails:"), sum(labels_train)
+    print ("no. of Sara training emails:"), len(labels_train)-sum(labels_train)
     
     return features_train_transformed, features_test_transformed, labels_train, labels_test
